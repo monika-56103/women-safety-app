@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SOS History</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+<div class="dashboard">
+    <h2>My SOS Alert History</h2>
+
+    <a href="/dashboard">
+        <button>Back to Dashboard</button>
+    </a>
+
+    <br><br>
+
+    {% if alerts %}
+        {% for alert in alerts %}
+            <div class="info-box">
+                <p><strong>Date & Time:</strong> {{ alert["timestamp"] }}</p>
+                <p>
+                    <strong>Location:</strong>
+                    <a href="https://www.google.com/maps?q={{ alert['latitude'] }},{{ alert['longitude'] }}" target="_blank">
+                        View on Map
+                    </a>
+                </p>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No SOS alerts found.</p>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

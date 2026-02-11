@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard | Women Safety App</title>
+   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+</head>
+<body>
+
+<div class="dashboard">
+    <h2>Welcome {{ name }}</h2>
+<p>Women Safety App Dashboard</p>
+
+<a href="/logout">
+    <button style="margin-bottom:15px;">Logout</button>
+</a>
+
+<a href="/history">
+    <button style="margin-bottom:15px;">View My Alerts</button>
+</a>
+
+
+    <button class="sos-btn">SOS</button>
+
+    <div class="info-box">
+        <p><strong>Current Location:</strong></p>
+        <p id="location">Location will appear here</p>
+    </div>
+
+    <div id="statusBox" class="status-box" style="display:none;">
+    Emergency Alert Active
+</div>
+
+
+    <div class="info-box">
+        <p><strong>Emergency Numbers</strong></p>
+        <p>Police: 100</p>
+        <p>Women Helpline: 181</p>
+    </div>
+</div>
+
+</body>
+<script>
+    const sosBtn = document.querySelector(".sos-btn");
+    const locationText = document.getElementById("location");
+    const statusBox = document.getElementById("statusBox");
+    const dashboard = document.querySelector(".dashboard");
+
+    sosBtn.addEventListener("click", () => {
+        if (navigator.geolocation) {
+            dashboard.classList.add("alert-mode");
+            statusBox.style.display = "block";
+            locationText.innerText = "Fetching location...";
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+
+                    const mapLink = `https://www.google.com/maps?q=${lat},${lon}`;
+
+                    // Save to backend
+                    fetch("/save_sos", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: `latitude=${lat}&longitude=${lon}`
+                    })
+                    .then(response => response.text())
+                    .then(data => {
+                        locationText.innerHTML = `
+                            🚨 <strong>SOS ACTIVATED</strong><br><br>
+                            📍 <a href="${mapLink}" target="_blank">Live Location</a><br><br>
+                            ✅ Alert Saved in Database
+                        `;
+                    });
+                },
+                () => {
+                    locationText.innerText = "Unable to fetch location.";
+                }
+            );
+        }
+    });
+</script>
+
+
+</html>
