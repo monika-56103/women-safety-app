@@ -13,12 +13,13 @@ def get_db():
     return conn
 
 # ----------------------
-# Create Tables
+# Create Tables (IMPORTANT)
 # ----------------------
 def create_table():
     conn = sqlite3.connect("users.db")
     cursor = conn.cursor()
 
+    # Users Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -29,6 +30,7 @@ def create_table():
         )
     """)
 
+    # SOS Table
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS sos_alerts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -42,6 +44,9 @@ def create_table():
 
     conn.commit()
     conn.close()
+
+# 👉 VERY IMPORTANT — table automatically create hogi
+create_table()
 
 # ----------------------
 # Home Route
@@ -70,6 +75,7 @@ def register():
                 (name, mobile, contact1, contact2)
             )
             conn.commit()
+
         except sqlite3.IntegrityError:
             conn.close()
             return "⚠ Mobile number already registered!"
@@ -80,7 +86,7 @@ def register():
     return render_template("register.html")
 
 # ----------------------
-# Login Route (FIXED)
+# Login
 # ----------------------
 @app.route("/login", methods=["POST"])
 def login():
@@ -88,7 +94,12 @@ def login():
 
     conn = get_db()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM users WHERE mobile=?", (mobile,))
+
+    cursor.execute(
+        "SELECT * FROM users WHERE mobile=?",
+        (mobile,)
+    )
+
     user = cursor.fetchone()
     conn.close()
 
@@ -96,16 +107,20 @@ def login():
         session["user_id"] = user["id"]
         session["name"] = user["name"]
         return redirect("/dashboard")
+
     else:
         return "❌ Mobile number not found!"
 
 # ----------------------
-# Dashboard Route (ADDED BACK)
+# Dashboard
 # ----------------------
 @app.route("/dashboard")
 def dashboard():
     if "user_id" in session:
-        return render_template("dashboard.html", name=session["name"])
+        return render_template(
+            "dashboard.html",
+            name=session["name"]
+        )
     else:
         return redirect("/")
 
@@ -114,11 +129,13 @@ def dashboard():
 # ----------------------
 @app.route("/save_sos", methods=["POST"])
 def save_sos():
+
     if "user_id" not in session:
         return "Unauthorized", 401
 
     latitude = request.form["latitude"]
     longitude = request.form["longitude"]
+
     user_id = session["user_id"]
 
     conn = get_db()
@@ -135,10 +152,11 @@ def save_sos():
     return "SOS Saved Successfully"
 
 # ----------------------
-# History Route
+# History
 # ----------------------
 @app.route("/history")
 def history():
+
     if "user_id" not in session:
         return redirect("/")
 
@@ -146,14 +164,19 @@ def history():
 
     conn = get_db()
     cursor = conn.cursor()
+
     cursor.execute(
         "SELECT * FROM sos_alerts WHERE user_id=? ORDER BY timestamp DESC",
         (user_id,)
     )
+
     alerts = cursor.fetchall()
     conn.close()
 
-    return render_template("history.html", alerts=alerts)
+    return render_template(
+        "history.html",
+        alerts=alerts
+    )
 
 # ----------------------
 # Logout
@@ -167,5 +190,4 @@ def logout():
 # Run App
 # ----------------------
 if __name__ == "__main__":
-    create_table()
     app.run(debug=True)
